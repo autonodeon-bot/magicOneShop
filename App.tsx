@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Check, Gift, History, PlusCircle, Copy, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Tag, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy, Database, ExternalLink, AlertTriangle } from 'lucide-react';
+import { QrCode, Check, Gift, History, PlusCircle, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy, Database, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react'; 
 import { db } from './services/mockService';
 import { User, Product, Transaction, QRCodeData, NewsItem } from './types';
@@ -14,7 +14,6 @@ import QRCode from 'qrcode';
 // --- Sub Components ---
 
 const Confetti = () => {
-    // Simple DOM confetti
     return (
         <div className="fixed inset-0 pointer-events-none z-[70] overflow-hidden flex justify-center">
             {[...Array(50)].map((_, i) => (
@@ -74,7 +73,6 @@ const DailyBonusModal = ({ onClose, rule, streak }: { onClose: () => void, rule:
 };
 
 const RankProgress = ({ balance }: { balance: number }) => {
-    // Rank Logic
     const ranks = [
         { name: 'Новичок', min: 0 },
         { name: 'Искатель', min: 100 },
@@ -137,7 +135,6 @@ const HomePage = ({ user }: { user: User }) => {
 
   return (
     <div className="space-y-6 pt-4 pb-24 relative z-10">
-      {/* Header Balance */}
       <div className="flex flex-col items-center justify-center py-6 relative">
         <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
@@ -155,7 +152,6 @@ const HomePage = ({ user }: { user: User }) => {
 
       <RankProgress balance={user.balance} />
 
-      {/* Bonus Tracker */}
       <Card className="mx-4 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         <div className="flex justify-between items-center mb-4 relative z-10">
@@ -180,7 +176,6 @@ const HomePage = ({ user }: { user: User }) => {
         </div>
       </Card>
 
-      {/* Actions */}
       <div className="grid grid-cols-2 gap-4 px-4">
         <TiltCard className="h-36 relative overflow-hidden group bg-gradient-to-br from-indigo-900 to-indigo-950">
             <div className="absolute -right-4 -top-4 text-indigo-500/20 group-hover:text-indigo-500/30 transition-colors">
@@ -341,7 +336,6 @@ const ShopPage = ({ user, refreshUser, showToast }: { user: User, refreshUser: (
       {showConfetti && <Confetti />}
       <h2 className="text-2xl font-bold px-1">Магазин наград</h2>
       
-      {/* Product Detail Modal */}
       <Modal 
         isOpen={!!selectedProduct} 
         onClose={() => setSelectedProduct(null)} 

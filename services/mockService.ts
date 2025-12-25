@@ -66,57 +66,66 @@ export const db = {
 
         if (error) throw error;
 
-        // 2. Если пользователя нет в базе - создаем
-        if (!data) {
-            const newUser = {
-                id: userId,
-                name: realName,
-                username: tgUser?.username || null,
-                balance: 0,
-                role: userId === '207940967' ? 'admin' : 'user',
-                last_login_date: new Date(Date.now() - 86400000 * 2).toISOString(),
-                login_streak: 0
-            };
+        // 2. Если пользователь найден - возвращаем его + обновляем фоном
+        if (data) {
+             // Запускаем обновление в фоне, не блокируя UI
+             (async () => {
+                 try {
+                     const updates: any = {};
+                     if (data.name !== realName) updates.name = realName;
+                     if (tgUser?.username && data.username !== tgUser.username) updates.username = tgUser.username;
+                     // Если это хардкодный админ, форсируем роль
+                     if (userId === '207940967' && data.role !== 'admin') {
+                        updates.role = 'admin';
+                     }
+                     if (Object.keys(updates).length > 0) {
+                        await supabase.from('users').update(updates).eq('id', userId);
+                     }
+                 } catch(e) {
+                     console.error("Background update failed", e);
+                 }
+             })();
 
-            const { data: createdUser, error: createError } = await supabase
-                .from('users')
-                .insert([newUser])
-                .select()
-                .single();
-            
-            if (createError) throw createError;
-            
-            return {
-                ...createdUser,
-                lastLoginDate: createdUser.last_login_date,
-                loginStreak: createdUser.login_streak
-            } as User;
+             return {
+                ...data,
+                // Если мы хардкодный админ, переопределяем роль на клиенте сразу
+                role: userId === '207940967' ? 'admin' : data.role, 
+                lastLoginDate: data.last_login_date,
+                loginStreak: data.login_streak
+             } as User;
         }
 
-        // 3. Обновляем данные пользователя если нужно
-        const updates: any = {};
-        if (data.name !== realName) updates.name = realName;
-        if (tgUser?.username && data.username !== tgUser.username) updates.username = tgUser.username;
-        if (userId === '207940967' && data.role !== 'admin') {
-            updates.role = 'admin';
-            data.role = 'admin';
-        }
-
-        if (Object.keys(updates).length > 0) {
-            await supabase.from('users').update(updates).eq('id', userId);
-        }
-
-        return {
-            ...data,
+        // 3. Если пользователя нет в базе - создаем
+        const newUser = {
+            id: userId,
             name: realName,
-            lastLoginDate: data.last_login_date,
-            loginStreak: data.login_streak
+            username: tgUser?.username || null,
+            balance: 0,
+            role: userId === '207940967' ? 'admin' : 'user',
+            last_login_date: new Date(Date.now() - 86400000 * 2).toISOString(),
+            login_streak: 0
+        };
+
+        const { data: createdUser, error: createError } = await supabase
+            .from('users')
+            .insert([newUser])
+            .select()
+            .single();
+        
+        if (createError) throw createError;
+        
+        return {
+            ...createdUser,
+            lastLoginDate: createdUser.last_login_date,
+            loginStreak: createdUser.login_streak
         } as User;
 
     } catch (e) {
         console.warn("Database connection failed, loading offline/fallback user:", e);
         
         // ВОЗВРАЩАЕМ ЛОКАЛЬНОГО ПОЛЬЗОВАТЕЛЯ, ЧТОБЫ ПРИЛОЖЕНИЕ НЕ ПАДАЛО
+        // Важно: если БД недоступна, мы не можем знать реальную роль, 
+        // поэтому даем 'admin' только хардкодному ID.
         return {
             id: userId,
             name: realName,
