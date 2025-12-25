@@ -16,11 +16,13 @@ import QRCode from 'qrcode';
 const SetupDatabaseScreen = () => {
     const [copied, setCopied] = useState(false);
     
+    // Добавил поле username в таблицу users
     const sqlScript = `
 -- 1. Таблица пользователей
 create table if not exists users (
   id text primary key,
   name text not null,
+  username text,
   balance integer default 0,
   role text default 'user',
   last_login_date timestamptz default now(),
@@ -1026,17 +1028,28 @@ export default function App() {
             setTimeout(() => setShowConfetti(false), 5000);
         }
     } catch (e: any) {
-        console.error("Initialization failed:", e);
-        // Проверяем сообщение ошибки на отсутствие таблицы
-        if (e.message === 'TABLE_NOT_FOUND' || e.message?.includes('users') || e.code === 'PGRST205') {
+        // Проверяем сообщение ошибки на отсутствие таблицы (PGRST205)
+        // и скрываем консольный лог для этой специфической ошибки
+        const isTableError = e.message === 'TABLE_NOT_FOUND' || 
+                             e.message?.includes('users') || 
+                             e.code === 'PGRST205' ||
+                             e.message?.includes('relation "public.users" does not exist');
+
+        if (isTableError) {
             setIsDbMissing(true);
         } else {
+            console.error("Initialization failed:", e);
             showToast("Ошибка соединения с базой данных: " + (e.message || "Unknown error"), "error");
         }
     }
   };
 
   useEffect(() => {
+    // Сообщаем телеграму, что приложение загрузилось
+    if ((window as any).Telegram?.WebApp) {
+        (window as any).Telegram.WebApp.ready();
+        (window as any).Telegram.WebApp.expand();
+    }
     initData();
   }, []);
 

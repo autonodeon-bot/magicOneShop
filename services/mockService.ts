@@ -1,16 +1,43 @@
 import { supabase } from '../supabaseClient';
 import { User, QRCodeData, Product, Transaction, DailyBonusRule, NewsItem } from '../types';
 
-// Используем localStorage для хранения ID текущего устройства/пользователя.
+// Интерфейс для Telegram WebApp
+interface TelegramUser {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    language_code?: string;
+}
+
+// Получение данных из Telegram
+const getTelegramUser = (): TelegramUser | null => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        return tg.initDataUnsafe.user;
+    }
+    return null;
+};
+
+// Получение ID текущего пользователя
 const getMyUserId = () => {
+    // 1. Пытаемся взять ID из Телеграма
+    const tgUser = getTelegramUser();
+    if (tgUser) {
+        return String(tgUser.id);
+    }
+
+    // 2. Если мы не в Телеграме (локальная разработка), используем localStorage
     let id = localStorage.getItem('my_user_id');
     
-    // ВАЖНО: Принудительно устанавливаем ваш ID админа для текущей сессии браузера,
-    // чтобы вы сразу получили доступ к админке.
-    const mainAdminId = '207940967';
+    // ВАЖНО: Для удобства тестирования в браузере (без ТГ) 
+    // можно раскомментировать строку ниже, чтобы быть админом локально.
+    const mainAdminId = '207940967'; 
     
-    if (id !== mainAdminId) {
-        id = mainAdminId;
+    if (!id) {
+        // Если ID нет и мы локально, пусть будет случайный или админский для тестов
+        // id = mainAdminId; 
+        id = 'user_' + crypto.randomUUID().slice(0, 8);
         localStorage.setItem('my_user_id', id);
     }
     
@@ -26,11 +53,21 @@ const DEFAULT_BONUS_RULES: DailyBonusRule[] = [
 ];
 
 export const db = {
-  // Получить текущего пользователя
+  // Получить текущего пользователя (или создать, если нет)
   getUser: async (): Promise<User> => {
     const userId = getMyUserId();
+    const tgUser = getTelegramUser();
     
-    // 1. Пытаемся найти пользователя
+    // Формируем имя: либо из Телеграма, либо заглушка
+    let realName = `User ${userId.slice(0, 5)}`;
+    if (tgUser) {
+        realName = tgUser.first_name;
+        if (tgUser.last_name) realName += ` ${tgUser.last_name}`;
+    } else if (userId === '207940967') {
+        realName = 'Главный Админ';
+    }
+
+    // 1. Ищем пользователя в БД
     const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -38,21 +75,21 @@ export const db = {
         .maybeSingle();
 
     if (error) {
-        // Тихо обрабатываем ошибку отсутствия таблицы
-        if (error.code === 'PGRST205' || error.message.includes('users')) {
+        // Если ошибка связана с отсутствием таблицы, пробрасываем её
+        if (error.code === 'PGRST205' || error.message?.includes('users') || error.message?.includes('relation "public.users" does not exist')) {
             throw new Error('TABLE_NOT_FOUND');
         }
         console.error("Supabase error (getUser):", JSON.stringify(error, null, 2));
     }
 
-    // 2. Если пользователя нет (data === null), создаем
+    // 2. Если пользователя нет -> Создаем (INSERT)
     if (!data) {
         const newUser = {
             id: userId,
-            name: userId === '207940967' ? 'Главный Админ' : `User ${userId.slice(0, 5)}`,
+            name: realName,
+            username: tgUser?.username || null,
             balance: 0,
-            // Автоматически даем админку указанному ID
-            role: userId === '207940967' ? 'admin' : 'user',
+            role: userId === '207940967' ? 'admin' : 'user', // Хардкод первого админа
             last_login_date: new Date(Date.now() - 86400000 * 2).toISOString(),
             login_streak: 0
         };
@@ -64,7 +101,7 @@ export const db = {
             .single();
             
         if (createError) {
-             if (createError.code === 'PGRST205' || createError.message.includes('users')) {
+             if (createError.code === 'PGRST205' || createError.message?.includes('users') || createError.message?.includes('relation "public.users" does not exist')) {
                 throw new Error('TABLE_NOT_FOUND');
             }
             console.error("Supabase error (createUser):", JSON.stringify(createError, null, 2));
@@ -78,14 +115,26 @@ export const db = {
         } as User;
     }
 
-    // Если пользователь уже есть, проверяем, не нужно ли выдать админку (если вы удаляли таблицы и пересоздавали)
+    // 3. Если пользователь есть -> Обновляем данные (UPDATE)
+    // Это важно, если человек поменял имя или username в телеграме, 
+    // или если мы хотим выдать админку по ID.
+    const updates: any = {};
+    if (data.name !== realName) updates.name = realName;
+    if (tgUser?.username && data.username !== tgUser.username) updates.username = tgUser.username;
+    
+    // Проверка прав админа для конкретного ID (страховка)
     if (userId === '207940967' && data.role !== 'admin') {
-        await supabase.from('users').update({ role: 'admin' }).eq('id', userId);
+        updates.role = 'admin';
         data.role = 'admin';
+    }
+
+    if (Object.keys(updates).length > 0) {
+        await supabase.from('users').update(updates).eq('id', userId);
     }
 
     return {
         ...data,
+        name: realName, // Возвращаем актуальное имя сразу
         lastLoginDate: data.last_login_date,
         loginStreak: data.login_streak
     } as User;
@@ -170,6 +219,7 @@ export const db = {
   },
 
   // Создать QR (Админка) - Массово
+  // Эти данные заносятся в таблицу qr_codes
   generateBulkQRCodes: async (amount: number, count: number): Promise<QRCodeData[]> => {
     const currentUserId = getMyUserId();
     const rows = [];
