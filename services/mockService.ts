@@ -1,21 +1,21 @@
+import { supabase } from '../supabaseClient';
 import { User, QRCodeData, Product, Transaction, DailyBonusRule, NewsItem } from '../types';
 
-// В реальном проекте используйте Supabase Client
-// import { createClient } from '@supabase/supabase-js'
-
-const CURRENT_USER_ID = 'user_001'; // Хардкод текущего пользователя для демо
-
-// Начальные данные
-const INITIAL_PRODUCTS: Product[] = [
-  { id: '1', name: 'Премиум стикеры', price: 10, image: 'https://picsum.photos/200/200?random=1', description: 'Набор уникальных стикеров для Telegram' },
-  { id: '2', name: 'Скидка 15%', price: 25, image: 'https://picsum.photos/200/200?random=2', description: 'Скидка на следующую покупку игрушки' },
-  { id: '3', name: 'Секретная игрушка', price: 100, image: 'https://picsum.photos/200/200?random=3', description: 'Лимитированная фигурка' },
-  { id: '4', name: 'VIP Статус', price: 500, image: 'https://picsum.photos/200/200?random=4', description: 'Золотая рамка в приложении' },
-];
-
-const INITIAL_NEWS: NewsItem[] = [
-    { id: '1', title: 'Добро пожаловать!', content: 'Мы запустили приложение Golden Cubes. Собирайте кубики и получайте призы!', date: new Date().toISOString(), image: 'https://picsum.photos/400/200?random=10' }
-];
+// Используем localStorage для хранения ID текущего устройства/пользователя.
+const getMyUserId = () => {
+    let id = localStorage.getItem('my_user_id');
+    
+    // ВАЖНО: Принудительно устанавливаем ваш ID админа для текущей сессии браузера,
+    // чтобы вы сразу получили доступ к админке.
+    const mainAdminId = '207940967';
+    
+    if (id !== mainAdminId) {
+        id = mainAdminId;
+        localStorage.setItem('my_user_id', id);
+    }
+    
+    return id!;
+};
 
 const DEFAULT_BONUS_RULES: DailyBonusRule[] = [
   { day: 1, reward: 1 },
@@ -23,119 +23,122 @@ const DEFAULT_BONUS_RULES: DailyBonusRule[] = [
   { day: 3, reward: 2 },
   { day: 4, reward: 3 },
   { day: 5, reward: 3 },
-  // Далее можно настроить логику цикличности
 ];
-
-// Хелперы для LocalStorage
-const getStorage = <T>(key: string, initial: T): T => {
-  const saved = localStorage.getItem(key);
-  return saved ? JSON.parse(saved) : initial;
-};
-
-const setStorage = (key: string, value: any) => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
-
-// --- API Service ---
 
 export const db = {
   // Получить текущего пользователя
   getUser: async (): Promise<User> => {
-    // Имитация задержки сети
-    await new Promise(r => setTimeout(r, 300));
+    const userId = getMyUserId();
     
-    let users = getStorage<User[]>('users', []);
-    let user = users.find(u => u.id === CURRENT_USER_ID);
+    // 1. Пытаемся найти пользователя
+    const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    if (!user) {
-      user = {
-        id: CURRENT_USER_ID,
-        name: 'Алексей',
-        balance: 0,
-        role: 'admin', // Для демо даем админа сразу. В реальном app это должно быть 'user' по умолчанию
-        lastLoginDate: new Date(Date.now() - 86400000 * 2).toISOString(), // Симулируем, что заходил 2 дня назад
-        loginStreak: 0
-      };
-      users.push(user);
-      setStorage('users', users);
+    if (error) {
+        // Тихо обрабатываем ошибку отсутствия таблицы
+        if (error.code === 'PGRST205' || error.message.includes('users')) {
+            throw new Error('TABLE_NOT_FOUND');
+        }
+        console.error("Supabase error (getUser):", JSON.stringify(error, null, 2));
     }
-    return user;
+
+    // 2. Если пользователя нет (data === null), создаем
+    if (!data) {
+        const newUser = {
+            id: userId,
+            name: userId === '207940967' ? 'Главный Админ' : `User ${userId.slice(0, 5)}`,
+            balance: 0,
+            // Автоматически даем админку указанному ID
+            role: userId === '207940967' ? 'admin' : 'user',
+            last_login_date: new Date(Date.now() - 86400000 * 2).toISOString(),
+            login_streak: 0
+        };
+
+        const { data: createdUser, error: createError } = await supabase
+            .from('users')
+            .insert([newUser])
+            .select()
+            .single();
+            
+        if (createError) {
+             if (createError.code === 'PGRST205' || createError.message.includes('users')) {
+                throw new Error('TABLE_NOT_FOUND');
+            }
+            console.error("Supabase error (createUser):", JSON.stringify(createError, null, 2));
+            throw new Error(`Failed to create user: ${createError.message}`);
+        }
+        
+        return {
+            ...createdUser,
+            lastLoginDate: createdUser.last_login_date,
+            loginStreak: createdUser.login_streak
+        } as User;
+    }
+
+    // Если пользователь уже есть, проверяем, не нужно ли выдать админку (если вы удаляли таблицы и пересоздавали)
+    if (userId === '207940967' && data.role !== 'admin') {
+        await supabase.from('users').update({ role: 'admin' }).eq('id', userId);
+        data.role = 'admin';
+    }
+
+    return {
+        ...data,
+        lastLoginDate: data.last_login_date,
+        loginStreak: data.login_streak
+    } as User;
   },
 
   // Получить всех пользователей (для админки)
   getAllUsers: async (): Promise<User[]> => {
-    return getStorage<User[]>('users', []);
+    const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+    if (error) console.error("Error getAllUsers:", JSON.stringify(error));
+    return (data || []).map(u => ({
+        ...u,
+        lastLoginDate: u.last_login_date,
+        loginStreak: u.login_streak
+    }));
   },
 
   // Обновить баланс пользователя (админка)
   adminAddCubes: async (userId: string, amount: number): Promise<void> => {
-    const users = getStorage<User[]>('users', []);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) throw new Error('User not found');
+    const { data: user, error: fetchError } = await supabase.from('users').select('balance').eq('id', userId).single();
+    if (fetchError || !user) return;
 
-    users[userIndex].balance += amount;
-    setStorage('users', users);
+    const newBalance = (user.balance || 0) + amount;
 
-    // Записать транзакцию
-    const tx: Transaction = {
-      id: crypto.randomUUID(),
-      userId,
-      amount,
-      type: 'admin_add',
-      description: 'Начисление администратором',
-      date: new Date().toISOString()
-    };
-    const txs = getStorage<Transaction[]>('transactions', []);
-    txs.push(tx);
-    setStorage('transactions', txs);
+    await supabase.from('users').update({ balance: newBalance }).eq('id', userId);
+
+    await supabase.from('transactions').insert([{
+        user_id: userId,
+        amount,
+        type: 'admin_add',
+        description: 'Начисление администратором',
+        date: new Date().toISOString()
+    }]);
   },
   
   // Назначить админа по ID
   promoteToAdmin: async (userId: string): Promise<boolean> => {
-      const users = getStorage<User[]>('users', []);
-      const userIndex = users.findIndex(u => u.id === userId);
-      
-      // В реальной базе вы бы просто создали запись, даже если юзер еще не заходил
-      // Но здесь мы эмулируем: если пользователя нет в базе (не заходил), мы создаем "заготовку"
-      if (userIndex === -1) {
-          const newUser: User = {
-              id: userId,
-              name: `User ${userId.slice(0, 4)}`,
-              balance: 0,
-              role: 'admin',
-              lastLoginDate: new Date().toISOString(),
-              loginStreak: 0
-          };
-          users.push(newUser);
-          setStorage('users', users);
-          return true;
-      }
-
-      users[userIndex].role = 'admin';
-      setStorage('users', users);
-      return true;
+      const { error } = await supabase.from('users').update({ role: 'admin' }).eq('id', userId);
+      return !error;
   },
 
   // Проверка ежедневного бонуса
   checkDailyBonus: async (userId: string): Promise<{ collected: boolean, reward: number, newStreak: number } | null> => {
-    const users = getStorage<User[]>('users', []);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) return null;
+    const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+    if (!user) return null;
 
-    const user = users[userIndex];
-    const lastLogin = new Date(user.lastLoginDate);
+    const lastLogin = new Date(user.last_login_date);
     const now = new Date();
     
-    // Сброс времени для сравнения только дат
     const isSameDay = lastLogin.toDateString() === now.toDateString();
-    
-    if (isSameDay) return null; // Уже получал сегодня
+    if (isSameDay) return null;
 
-    const diffTime = Math.abs(now.getTime() - lastLogin.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
-    let newStreak = user.loginStreak;
-    const isConsecutive = (now.getDate() - lastLogin.getDate() === 1) || (now.getTime() - lastLogin.getTime() < 86400000 * 2);
+    let newStreak = user.login_streak;
+    const isConsecutive = (now.getTime() - lastLogin.getTime() < 86400000 * 2);
 
     if (isConsecutive) {
         newStreak += 1;
@@ -143,179 +146,168 @@ export const db = {
         newStreak = 1;
     }
 
-    // Найти награду
-    const rules = getStorage<DailyBonusRule[]>('bonusRules', DEFAULT_BONUS_RULES);
+    const rules = DEFAULT_BONUS_RULES;
     const rule = rules.find(r => r.day === newStreak) || rules[rules.length - 1];
     const reward = rule ? rule.reward : 1;
 
-    // Обновляем юзера
-    user.balance += reward;
-    user.lastLoginDate = now.toISOString();
-    user.loginStreak = newStreak;
-    users[userIndex] = user;
-    setStorage('users', users);
+    const { error } = await supabase.from('users').update({
+        balance: user.balance + reward,
+        last_login_date: now.toISOString(),
+        login_streak: newStreak
+    }).eq('id', userId);
 
-    // Транзакция
-    const tx: Transaction = {
-        id: crypto.randomUUID(),
-        userId,
+    if (error) return null;
+
+    await supabase.from('transactions').insert([{
+        user_id: userId,
         amount: reward,
         type: 'daily_bonus',
         description: `Ежедневный бонус (День ${newStreak})`,
-        date: new Date().toISOString()
-    };
-    const txs = getStorage<Transaction[]>('transactions', []);
-    txs.push(tx);
-    setStorage('transactions', txs);
+        date: now.toISOString()
+    }]);
 
     return { collected: true, reward, newStreak };
   },
 
-  // Создать QR (Админка) - Одиночный
-  generateQRCode: async (amount: number): Promise<QRCodeData> => {
-    const code = crypto.randomUUID().slice(0, 8).toUpperCase();
-    const qr: QRCodeData = {
-      id: crypto.randomUUID(),
-      code,
-      value: amount,
-      status: 'active',
-      generatedBy: CURRENT_USER_ID,
-      createdAt: new Date().toISOString()
-    };
-    
-    const qrs = getStorage<QRCodeData[]>('qrcodes', []);
-    qrs.push(qr);
-    setStorage('qrcodes', qrs);
-    return qr;
-  },
-
   // Создать QR (Админка) - Массово
   generateBulkQRCodes: async (amount: number, count: number): Promise<QRCodeData[]> => {
-    const newQrs: QRCodeData[] = [];
-    const qrs = getStorage<QRCodeData[]>('qrcodes', []);
+    const currentUserId = getMyUserId();
+    const rows = [];
     
     for(let i=0; i < count; i++) {
-        const code = crypto.randomUUID().slice(0, 8).toUpperCase();
-        const qr: QRCodeData = {
-            id: crypto.randomUUID(),
-            code,
+        rows.push({
+            code: crypto.randomUUID().slice(0, 8).toUpperCase(),
             value: amount,
             status: 'active',
-            generatedBy: CURRENT_USER_ID,
-            createdAt: new Date().toISOString()
-        };
-        newQrs.push(qr);
-        qrs.push(qr);
+            generated_by: currentUserId
+        });
     }
     
-    setStorage('qrcodes', qrs);
-    return newQrs;
+    const { data, error } = await supabase.from('qr_codes').insert(rows).select();
+    
+    if (error) {
+        console.error("Error generating QRs:", JSON.stringify(error));
+        return [];
+    }
+
+    return (data || []).map(q => ({
+        ...q,
+        generatedBy: q.generated_by,
+        usedBy: q.used_by,
+        createdAt: q.created_at
+    }));
   },
 
   // Активировать QR (Пользователь)
   activateQRCode: async (code: string): Promise<{ success: boolean, amount: number, message: string }> => {
-    const qrs = getStorage<QRCodeData[]>('qrcodes', []);
-    const qrIndex = qrs.findIndex(q => q.code === code);
+    const currentUserId = getMyUserId();
 
-    if (qrIndex === -1) return { success: false, amount: 0, message: 'Неверный код' };
-    if (qrs[qrIndex].status === 'used') return { success: false, amount: 0, message: 'Код уже использован' };
+    const { data: qr, error } = await supabase
+        .from('qr_codes')
+        .select('*')
+        .eq('code', code)
+        .single();
 
-    // Активация
-    qrs[qrIndex].status = 'used';
-    qrs[qrIndex].usedBy = CURRENT_USER_ID;
-    setStorage('qrcodes', qrs);
+    if (error || !qr) return { success: false, amount: 0, message: 'Неверный код' };
+    if (qr.status === 'used') return { success: false, amount: 0, message: 'Код уже использован' };
 
-    // Начисление
-    const amount = qrs[qrIndex].value;
-    const users = getStorage<User[]>('users', []);
-    const userIndex = users.findIndex(u => u.id === CURRENT_USER_ID);
-    if (userIndex !== -1) {
-        users[userIndex].balance += amount;
-        setStorage('users', users);
+    const { error: updateError } = await supabase
+        .from('qr_codes')
+        .update({ status: 'used', used_by: currentUserId })
+        .eq('id', qr.id)
+        .eq('status', 'active'); 
+
+    if (updateError) return { success: false, amount: 0, message: 'Ошибка активации' };
+
+    const { data: user } = await supabase.from('users').select('balance').eq('id', currentUserId).single();
+    if (user) {
+        await supabase.from('users').update({ balance: user.balance + qr.value }).eq('id', currentUserId);
         
-        // Транзакция
-        const tx: Transaction = {
-            id: crypto.randomUUID(),
-            userId: CURRENT_USER_ID,
-            amount: amount,
+        await supabase.from('transactions').insert([{
+            user_id: currentUserId,
+            amount: qr.value,
             type: 'qr_scan',
             description: 'Сканирование игрушки',
             date: new Date().toISOString()
-        };
-        const txs = getStorage<Transaction[]>('transactions', []);
-        txs.push(tx);
-        setStorage('transactions', txs);
+        }]);
     }
 
-    return { success: true, amount, message: 'Успешно!' };
+    return { success: true, amount: qr.value, message: 'Успешно!' };
   },
 
   // --- Товары ---
   getProducts: async (): Promise<Product[]> => {
-    return getStorage<Product[]>('products', INITIAL_PRODUCTS);
+    const { data, error } = await supabase.from('products').select('*').order('price', { ascending: true });
+    if (error) console.error(JSON.stringify(error));
+    return data || [];
   },
 
   addProduct: async (product: Omit<Product, 'id'>): Promise<Product> => {
-      const products = getStorage<Product[]>('products', INITIAL_PRODUCTS);
-      const newProduct = { ...product, id: crypto.randomUUID() };
-      products.push(newProduct);
-      setStorage('products', products);
-      return newProduct;
+      const { data, error } = await supabase.from('products').insert([product]).select().single();
+      if (error) throw error;
+      return data;
   },
 
   deleteProduct: async (id: string): Promise<void> => {
-      let products = getStorage<Product[]>('products', INITIAL_PRODUCTS);
-      products = products.filter(p => p.id !== id);
-      setStorage('products', products);
+      await supabase.from('products').delete().eq('id', id);
   },
 
   purchaseProduct: async (productId: string): Promise<boolean> => {
-    const users = getStorage<User[]>('users', []);
-    const userIndex = users.findIndex(u => u.id === CURRENT_USER_ID);
-    const products = getStorage<Product[]>('products', INITIAL_PRODUCTS);
-    const product = products.find(p => p.id === productId);
-
-    if (userIndex === -1 || !product) return false;
+    const currentUserId = getMyUserId();
     
-    if (users[userIndex].balance < product.price) return false;
+    const { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+    const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
 
-    users[userIndex].balance -= product.price;
-    setStorage('users', users);
+    if (!user || !product) return false;
+    if (user.balance < product.price) return false;
 
-    const tx: Transaction = {
-        id: crypto.randomUUID(),
-        userId: CURRENT_USER_ID,
-        amount: -product.price,
-        type: 'purchase',
-        description: `Покупка: ${product.name}`,
-        date: new Date().toISOString()
-    };
-    const txs = getStorage<Transaction[]>('transactions', []);
-    txs.push(tx);
-    setStorage('transactions', txs);
-
-    return true;
+    const { error } = await supabase.from('users').update({ balance: user.balance - product.price }).eq('id', currentUserId);
+    
+    if (!error) {
+        await supabase.from('transactions').insert([{
+            user_id: currentUserId,
+            amount: -product.price,
+            type: 'purchase',
+            description: `Покупка: ${product.name}`,
+            date: new Date().toISOString()
+        }]);
+        return true;
+    }
+    return false;
   },
 
   getTransactions: async (): Promise<Transaction[]> => {
-    const txs = getStorage<Transaction[]>('transactions', []);
-    return txs.filter(t => t.userId === CURRENT_USER_ID).reverse();
+    const currentUserId = getMyUserId();
+    const { data } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('date', { ascending: false });
+        
+    return (data || []).map(t => ({
+        ...t,
+        userId: t.user_id
+    }));
   },
 
   // --- Новости ---
   getNews: async (): Promise<NewsItem[]> => {
-      return getStorage<NewsItem[]>('news', INITIAL_NEWS).reverse();
+      const { data, error } = await supabase.from('news').select('*').order('date', { ascending: false });
+      if (error) console.error(JSON.stringify(error));
+      return data || [];
   },
 
   addNews: async (item: Omit<NewsItem, 'id' | 'date'>): Promise<NewsItem> => {
-      const news = getStorage<NewsItem[]>('news', INITIAL_NEWS);
-      const newItem: NewsItem = {
-          ...item,
-          id: crypto.randomUUID(),
-          date: new Date().toISOString()
-      };
-      news.push(newItem);
-      setStorage('news', news);
-      return newItem;
+      const { data, error } = await supabase.from('news').insert([item]).select().single();
+      if (error) {
+          console.error(JSON.stringify(error));
+          throw error;
+      }
+      return data;
+  },
+
+  generateQRCode: async (amount: number): Promise<QRCodeData> => {
+      const arr = await db.generateBulkQRCodes(amount, 1);
+      return arr[0];
   }
 };

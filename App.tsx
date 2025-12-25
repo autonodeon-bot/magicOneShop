@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Check, Gift, History, PlusCircle, Copy, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Tag, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy } from 'lucide-react';
+import { QrCode, Check, Gift, History, PlusCircle, Copy, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Tag, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy, Database, ExternalLink, AlertTriangle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react'; 
 import { db } from './services/mockService';
 import { User, Product, Transaction, QRCodeData, NewsItem } from './types';
@@ -12,6 +12,127 @@ import { Document, Packer, Paragraph, Table, TableRow, TableCell, ImageRun, Text
 import QRCode from 'qrcode'; 
 
 // --- Sub Components ---
+
+const SetupDatabaseScreen = () => {
+    const [copied, setCopied] = useState(false);
+    
+    const sqlScript = `
+-- 1. Таблица пользователей
+create table if not exists users (
+  id text primary key,
+  name text not null,
+  balance integer default 0,
+  role text default 'user',
+  last_login_date timestamptz default now(),
+  login_streak integer default 0,
+  created_at timestamptz default now()
+);
+
+-- 2. Таблица товаров
+create table if not exists products (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  price integer not null,
+  image text,
+  description text,
+  created_at timestamptz default now()
+);
+
+-- 3. Таблица транзакций
+create table if not exists transactions (
+  id uuid default gen_random_uuid() primary key,
+  user_id text references users(id),
+  amount integer not null,
+  type text not null,
+  description text,
+  date timestamptz default now()
+);
+
+-- 4. Таблица новостей
+create table if not exists news (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  content text not null,
+  image text,
+  date timestamptz default now()
+);
+
+-- 5. Таблица QR кодов
+create table if not exists qr_codes (
+  id uuid default gen_random_uuid() primary key,
+  code text unique not null,
+  value integer not null,
+  status text default 'active',
+  generated_by text,
+  used_by text,
+  created_at timestamptz default now()
+);
+
+-- Отключение RLS для быстрого старта (В продакшене лучше настроить политики)
+alter table users disable row level security;
+alter table products disable row level security;
+alter table transactions disable row level security;
+alter table news disable row level security;
+alter table qr_codes disable row level security;
+
+-- Тестовые товары
+insert into products (name, price, image, description) values
+('Стикерпак', 10, 'https://picsum.photos/200/200?random=1', 'Набор стикеров'),
+('Скидка 20%', 50, 'https://picsum.photos/200/200?random=2', 'Скидка в магазине'),
+('VIP Статус', 100, 'https://picsum.photos/200/200?random=3', 'Особая рамка профиля');
+    `;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(sqlScript);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+            <Particles />
+            <div className="relative z-10 max-w-lg w-full">
+                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20 animate-pulse">
+                    <Database size={40} className="text-red-500" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">База данных не настроена</h1>
+                <p className="text-gray-400 mb-6 text-sm">
+                    Приложение подключено к Supabase, но таблицы отсутствуют.
+                    Выполните SQL скрипт в панели управления.
+                </p>
+
+                <Card className="text-left mb-6 border-red-500/20 relative group">
+                    <div className="absolute top-2 right-2">
+                        <button 
+                            onClick={handleCopy}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied ? 'bg-green-500 text-white' : 'bg-slate-700 text-gray-300 hover:bg-slate-600'}`}
+                        >
+                            {copied ? <Check size={14}/> : <Copy size={14}/>}
+                            {copied ? 'Скопировано' : 'Копировать SQL'}
+                        </button>
+                    </div>
+                    <pre className="text-[10px] text-gray-400 font-mono overflow-auto max-h-48 p-2 bg-slate-900/50 rounded-xl border border-white/5 scrollbar-hide">
+                        {sqlScript}
+                    </pre>
+                </Card>
+
+                <div className="flex flex-col gap-3">
+                    <a 
+                        href="https://supabase.com/dashboard/project/_/sql/new" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="w-full py-3.5 rounded-2xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-2 transition-colors"
+                    >
+                        Открыть SQL Editor <ExternalLink size={16}/>
+                    </a>
+                    <Button onClick={() => window.location.reload()} variant="secondary">
+                        Я выполнил, обновить
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const Confetti = () => {
     // Simple DOM confetti
@@ -885,28 +1006,43 @@ export default function App() {
   const [dailyBonus, setDailyBonus] = useState<{reward: number, streak: number} | null>(null);
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isDbMissing, setIsDbMissing] = useState(false);
 
   const showToast = (message: string, type: 'success'|'error') => {
       setToast({ message, type });
   };
 
   const initData = async () => {
-    const u = await db.getUser();
-    setUser(u);
+    try {
+        const u = await db.getUser();
+        setUser(u);
 
-    const bonus = await db.checkDailyBonus(u.id);
-    if (bonus) {
-        setDailyBonus({ reward: bonus.reward, streak: bonus.newStreak });
-        const updatedUser = await db.getUser();
-        setUser(updatedUser);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
+        const bonus = await db.checkDailyBonus(u.id);
+        if (bonus) {
+            setDailyBonus({ reward: bonus.reward, streak: bonus.newStreak });
+            const updatedUser = await db.getUser();
+            setUser(updatedUser);
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 5000);
+        }
+    } catch (e: any) {
+        console.error("Initialization failed:", e);
+        // Проверяем сообщение ошибки на отсутствие таблицы
+        if (e.message === 'TABLE_NOT_FOUND' || e.message?.includes('users') || e.code === 'PGRST205') {
+            setIsDbMissing(true);
+        } else {
+            showToast("Ошибка соединения с базой данных: " + (e.message || "Unknown error"), "error");
+        }
     }
   };
 
   useEffect(() => {
     initData();
   }, []);
+
+  if (isDbMissing) {
+      return <SetupDatabaseScreen />;
+  }
 
   if (!user) return (
       <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-yellow-500 gap-4">
