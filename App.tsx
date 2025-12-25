@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Check, Gift, History, PlusCircle, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy, Database, ExternalLink } from 'lucide-react';
+import { QrCode, Check, Gift, History, PlusCircle, ShoppingBag, Settings, Trash2, Newspaper, UserPlus, Type, Image as ImageIcon, Download, FileText, ChevronRight, Trophy, Database, ExternalLink, WifiOff } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react'; 
 import { db } from './services/mockService';
 import { User, Product, Transaction, QRCodeData, NewsItem } from './types';
@@ -889,6 +889,12 @@ export default function App() {
         const u = await db.getUser();
         setUser(u);
 
+        // Проверяем, оффлайн ли пользователь (по имени)
+        if (u.name.includes("(Offline)")) {
+            showToast("Нет связи с базой данных. Режим демо.", "error");
+            return; // Не пытаемся получить бонус в оффлайне
+        }
+
         const bonus = await db.checkDailyBonus(u.id);
         if (bonus) {
             setDailyBonus({ reward: bonus.reward, streak: bonus.newStreak });
@@ -949,6 +955,13 @@ export default function App() {
       <AnimatePresence>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       </AnimatePresence>
+      
+      {/* Offline Indicator */}
+      {user.name.includes("(Offline)") && (
+        <div className="fixed top-0 left-0 right-0 bg-red-600/90 text-white text-[10px] font-bold py-1 text-center z-[100] backdrop-blur flex justify-center items-center gap-2">
+            <WifiOff size={10} /> OFFLINE MODE: DATA WILL NOT SAVE
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
