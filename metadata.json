@@ -1,0 +1,7 @@
+{
+  "name": "Golden Cubes Rewards",
+  "description": "Система мотивации и лояльности для Telegram Mini App. Покупайте игрушки, сканируйте QR, копите кубики и получайте призы. Рекомендуемая БД: Supabase (PostgreSQL).",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
