@@ -46,19 +46,19 @@ const DailyBonusModal = ({ onClose, rule, streak }: { onClose: () => void, rule:
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.5, opacity: 0 }}
-        className="bg-dark-800 border border-gold-500/50 rounded-3xl p-8 w-full max-w-sm text-center relative overflow-hidden"
+        className="bg-slate-800 border border-yellow-500/50 rounded-3xl p-8 w-full max-w-sm text-center relative overflow-hidden"
       >
-        <div className="absolute top-0 left-0 w-full h-full bg-gold-500/10 radial-gradient pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-full bg-yellow-500/10 radial-gradient pointer-events-none" />
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-20 -right-20 w-64 h-64 bg-gold-500/20 rounded-full blur-3xl"
+          className="absolute -top-20 -right-20 w-64 h-64 bg-yellow-500/20 rounded-full blur-3xl"
         />
         <h2 className="text-2xl font-bold text-white mb-2">Ежедневный бонус!</h2>
         <p className="text-gray-400 mb-6">Вы заходите {streak} день подряд</p>
         <div className="flex justify-center mb-8 relative">
             <motion.div 
-                className="absolute inset-0 bg-gold-500/40 blur-2xl rounded-full"
+                className="absolute inset-0 bg-yellow-500/40 blur-2xl rounded-full"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity }}
             />
@@ -66,7 +66,7 @@ const DailyBonusModal = ({ onClose, rule, streak }: { onClose: () => void, rule:
                 <Cube size={80} />
             </motion.div>
         </div>
-        <div className="text-5xl font-black text-gold-400 mb-8 drop-shadow-lg">+{rule}</div>
+        <div className="text-5xl font-black text-yellow-400 mb-8 drop-shadow-lg">+{rule}</div>
         <Button onClick={onClose}>Забрать награду</Button>
       </motion.div>
     </div>
@@ -98,20 +98,20 @@ const RankProgress = ({ balance }: { balance: number }) => {
 
     return (
         <Card className="mx-4 mt-2 mb-6" noPadding>
-            <div className="p-4 bg-gradient-to-r from-dark-800 to-dark-700/50">
+            <div className="p-4 bg-gradient-to-r from-slate-800 to-slate-700/50">
                 <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center gap-2">
-                        <Trophy size={16} className="text-gold-500" />
-                        <span className="font-bold text-sm text-gold-100">{currentRank.name}</span>
+                        <Trophy size={16} className="text-yellow-500" />
+                        <span className="font-bold text-sm text-yellow-100">{currentRank.name}</span>
                     </div>
                     {nextRank && <span className="text-xs text-gray-500">{balance} / {nextRank.min}</span>}
                 </div>
-                <div className="h-2 bg-dark-900 rounded-full overflow-hidden border border-white/5">
+                <div className="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
                     <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.min(progress, 100)}%` }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
-                        className="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full shadow-[0_0_10px_#EAB308]" 
+                        className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-full shadow-[0_0_10px_#EAB308]" 
                     />
                 </div>
                 {nextRank && (
@@ -142,9 +142,9 @@ const HomePage = ({ user }: { user: User }) => {
         <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="absolute inset-0 bg-gold-500/5 blur-3xl rounded-full"
+            className="absolute inset-0 bg-yellow-500/5 blur-3xl rounded-full"
         />
-        <span className="text-gold-200/60 text-sm font-medium tracking-widest uppercase mb-2">Ваш баланс</span>
+        <span className="text-yellow-200/60 text-sm font-medium tracking-widest uppercase mb-2">Ваш баланс</span>
         <div className="flex items-center gap-4 relative z-10">
            <Cube size={52} />
            <span className="text-6xl font-black text-white tracking-tighter drop-shadow-xl">
@@ -160,10 +160,10 @@ const HomePage = ({ user }: { user: User }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         <div className="flex justify-between items-center mb-4 relative z-10">
           <h3 className="font-bold text-lg flex items-center gap-2 text-white">
-            <Gift size={20} className="text-gold-400" /> 
+            <Gift size={20} className="text-yellow-400" /> 
             Стрик входа
           </h3>
-          <span className="bg-gold-500/20 text-gold-400 px-3 py-1 rounded-full text-xs font-bold border border-gold-500/20">
+          <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold border border-yellow-500/20">
             {user.loginStreak} дн.
           </span>
         </div>
@@ -172,8 +172,8 @@ const HomePage = ({ user }: { user: User }) => {
                 const isCompleted = user.loginStreak >= day;
                 return (
                     <div key={day} className="flex flex-col items-center gap-2 flex-1">
-                        <div className={`w-full h-1.5 rounded-full transition-colors duration-500 ${isCompleted ? 'bg-gold-500 shadow-[0_0_8px_#EAB308]' : 'bg-dark-600'}`} />
-                        <span className={`text-[10px] font-bold ${isCompleted ? 'text-gold-400' : 'text-gray-600'}`}>{day}</span>
+                        <div className={`w-full h-1.5 rounded-full transition-colors duration-500 ${isCompleted ? 'bg-yellow-500 shadow-[0_0_8px_#EAB308]' : 'bg-slate-600'}`} />
+                        <span className={`text-[10px] font-bold ${isCompleted ? 'text-yellow-400' : 'text-gray-600'}`}>{day}</span>
                     </div>
                 )
             })}
@@ -194,13 +194,13 @@ const HomePage = ({ user }: { user: User }) => {
             </div>
         </TiltCard>
         
-        <TiltCard className="h-36 relative overflow-hidden group bg-gradient-to-br from-gold-900/50 to-amber-950/50">
-             <div className="absolute -right-4 -bottom-4 text-gold-500/10 group-hover:text-gold-500/20 transition-colors">
+        <TiltCard className="h-36 relative overflow-hidden group bg-gradient-to-br from-yellow-900/50 to-amber-950/50">
+             <div className="absolute -right-4 -bottom-4 text-yellow-500/10 group-hover:text-yellow-500/20 transition-colors">
                 <Gift size={90}/>
             </div>
             <div className="relative z-10 h-full flex flex-col justify-between p-1">
                 <span className="font-bold text-lg leading-tight text-white">Магазин<br/>подарков</span>
-                 <div className="flex items-center gap-2 text-xs text-gold-300 group-hover:text-white transition-colors">
+                 <div className="flex items-center gap-2 text-xs text-yellow-300 group-hover:text-white transition-colors">
                     Потратить <ChevronRight size={14} />
                 </div>
             </div>
@@ -228,17 +228,17 @@ const HomePage = ({ user }: { user: User }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         key={item.id} 
-                        className="bg-dark-800 rounded-3xl overflow-hidden border border-white/5 shadow-lg group"
+                        className="bg-slate-800 rounded-3xl overflow-hidden border border-white/5 shadow-lg group"
                     >
                         {item.image && (
                             <div className="h-40 overflow-hidden relative">
                                 <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-80" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-800 to-transparent opacity-80" />
                             </div>
                         )}
                         <div className="p-5 -mt-6 relative z-10">
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-[10px] uppercase tracking-wider text-gold-500 font-bold bg-gold-500/10 px-2 py-1 rounded-lg">News</span>
+                                <span className="text-[10px] uppercase tracking-wider text-yellow-500 font-bold bg-yellow-500/10 px-2 py-1 rounded-lg">News</span>
                                 <span className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</span>
                             </div>
                             <h4 className="font-bold text-lg mb-2 text-white">{item.title}</h4>
@@ -281,7 +281,7 @@ const TransactionsList = ({ limit }: { limit?: number }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     key={tx.id} 
-                    className="bg-dark-800/50 p-4 rounded-2xl flex items-center justify-between border border-white/5"
+                    className="bg-slate-800/50 p-4 rounded-2xl flex items-center justify-between border border-white/5"
                 >
                     <div className="flex items-center gap-4">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.amount > 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
@@ -351,7 +351,7 @@ const ShopPage = ({ user, refreshUser, showToast }: { user: User, refreshUser: (
             <div className="space-y-4">
                  <div className="rounded-2xl overflow-hidden aspect-square relative">
                     <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2 bg-dark-900/80 backdrop-blur px-3 py-1 rounded-full text-gold-400 font-bold border border-gold-500/20">
+                    <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur px-3 py-1 rounded-full text-yellow-400 font-bold border border-yellow-500/20">
                         {selectedProduct.price} <Cube size={14} className="inline -mt-1"/>
                     </div>
                  </div>
@@ -386,11 +386,11 @@ const ShopPage = ({ user, refreshUser, showToast }: { user: User, refreshUser: (
                     className="flex flex-col h-full"
                     onClick={() => setSelectedProduct(p)}
                 >
-                    <div className="aspect-square bg-dark-700 rounded-2xl mb-3 overflow-hidden relative">
+                    <div className="aspect-square bg-slate-700 rounded-2xl mb-3 overflow-hidden relative">
                         <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-dark-900/80 to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-60" />
                         <div className="absolute bottom-2 left-2 right-2">
-                             <div className="text-xs text-gold-400 font-bold bg-dark-900/90 w-fit px-2 py-1 rounded-lg backdrop-blur-sm border border-gold-500/20">
+                             <div className="text-xs text-yellow-400 font-bold bg-slate-900/90 w-fit px-2 py-1 rounded-lg backdrop-blur-sm border border-yellow-500/20">
                                 {p.price} <Cube size={12} className="inline"/>
                              </div>
                         </div>
@@ -445,13 +445,13 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
     return (
         <div className="flex flex-col h-screen pb-24 relative bg-black">
             {showConfetti && <Confetti />}
-            <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-dark-900">
+            <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-900">
                 {cameraActive ? (
                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-80" />
                 ) : (
                     <div className="text-center p-6 relative z-10">
-                        <div className="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
-                            <QrCode size={40} className="text-gold-500" />
+                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
+                            <QrCode size={40} className="text-yellow-500" />
                         </div>
                         <p className="text-gray-400 mb-6 font-medium">Наведите камеру на QR код игрушки</p>
                         <Button onClick={startCamera} variant="secondary" className="w-auto px-8">Включить камеру</Button>
@@ -461,11 +461,11 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
                 {/* Scanner Overlay UI */}
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                     <div className="w-64 h-64 relative">
-                        <div className="absolute inset-0 border-2 border-gold-500/30 rounded-3xl animate-pulse"></div>
-                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-gold-500 rounded-tl-2xl -mt-1 -ml-1"></div>
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-gold-500 rounded-tr-2xl -mt-1 -mr-1"></div>
-                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-gold-500 rounded-bl-2xl -mb-1 -ml-1"></div>
-                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-gold-500 rounded-br-2xl -mb-1 -mr-1"></div>
+                        <div className="absolute inset-0 border-2 border-yellow-500/30 rounded-3xl animate-pulse"></div>
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-yellow-500 rounded-tl-2xl -mt-1 -ml-1"></div>
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-yellow-500 rounded-tr-2xl -mt-1 -mr-1"></div>
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-yellow-500 rounded-bl-2xl -mb-1 -ml-1"></div>
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-yellow-500 rounded-br-2xl -mb-1 -mr-1"></div>
                         
                         {/* Scanning Laser Line */}
                         <motion.div 
@@ -477,7 +477,7 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
                 </div>
             </div>
 
-            <div className="bg-dark-900 p-6 rounded-t-3xl -mt-6 relative z-10 border-t border-white/10 shadow-2xl">
+            <div className="bg-slate-900 p-6 rounded-t-3xl -mt-6 relative z-10 border-t border-white/10 shadow-2xl">
                 <h3 className="font-bold text-center mb-4 text-sm text-gray-400 uppercase tracking-widest">Ручной ввод</h3>
                 <div className="flex gap-2">
                     <input 
@@ -485,7 +485,7 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         placeholder="CODE-123"
-                        className="flex-1 bg-dark-800 border border-dark-700 rounded-2xl px-5 py-4 text-white focus:border-gold-500 outline-none uppercase font-mono tracking-wider transition-colors placeholder:text-dark-600"
+                        className="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 text-white focus:border-yellow-500 outline-none uppercase font-mono tracking-wider transition-colors placeholder:text-slate-600"
                     />
                     <Button className="w-auto px-6 rounded-2xl" onClick={handleCodeSubmit} disabled={loading}>
                         {loading ? '...' : <Check />}
@@ -500,8 +500,8 @@ const ProfilePage = ({ user }: { user: User }) => {
     return (
         <div className="p-4 space-y-6 pb-24 relative z-10">
             <div className="flex items-center gap-5 p-2">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-gold-400 to-purple-600 p-[2px] shadow-2xl">
-                    <div className="w-full h-full rounded-full bg-dark-900 flex items-center justify-center text-4xl font-black text-white">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px] shadow-2xl">
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-4xl font-black text-white">
                         {user.name[0]}
                     </div>
                 </div>
@@ -509,7 +509,7 @@ const ProfilePage = ({ user }: { user: User }) => {
                     <h2 className="text-3xl font-bold tracking-tight">{user.name}</h2>
                     <p className="text-gray-400 text-sm font-mono opacity-60">ID: {user.id}</p>
                     <div className="flex gap-2 mt-2">
-                        <span className="text-[10px] uppercase font-bold bg-dark-800 border border-white/10 px-2 py-1 rounded text-gray-300">
+                        <span className="text-[10px] uppercase font-bold bg-slate-800 border border-white/10 px-2 py-1 rounded text-gray-300">
                             {user.role === 'admin' ? 'Администратор' : 'Участник'}
                         </span>
                     </div>
@@ -517,18 +517,18 @@ const ProfilePage = ({ user }: { user: User }) => {
             </div>
 
             <Card className="relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-10 bg-gold-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+                 <div className="absolute top-0 right-0 p-10 bg-yellow-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-400 font-medium">Общий заработок</span>
                     <span className="font-bold text-xl text-white">{user.balance + 150} <Cube className="inline"/></span>
                 </div>
-                <div className="w-full bg-dark-900 h-3 rounded-full mt-3 overflow-hidden border border-white/5">
-                    <div className="bg-gradient-to-r from-gold-600 to-gold-400 h-full w-[70%] shadow-[0_0_15px_rgba(234,179,8,0.5)]"></div>
+                <div className="w-full bg-slate-900 h-3 rounded-full mt-3 overflow-hidden border border-white/5">
+                    <div className="bg-gradient-to-r from-yellow-600 to-yellow-400 h-full w-[70%] shadow-[0_0_15px_rgba(234,179,8,0.5)]"></div>
                 </div>
             </Card>
 
             <div>
-                <h3 className="font-bold mb-4 flex items-center gap-2 text-lg"><History size={20} className="text-gold-500"/> История операций</h3>
+                <h3 className="font-bold mb-4 flex items-center gap-2 text-lg"><History size={20} className="text-yellow-500"/> История операций</h3>
                 <TransactionsList />
             </div>
         </div>
@@ -691,14 +691,14 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
 
     return (
         <div className="p-4 space-y-4 pb-24 relative z-10">
-            <h2 className="text-2xl font-bold mb-4 pl-2 border-l-4 border-gold-500">Админ Панель</h2>
+            <h2 className="text-2xl font-bold mb-4 pl-2 border-l-4 border-yellow-500">Админ Панель</h2>
             
-            <div className="flex bg-dark-800/50 p-1.5 rounded-2xl mb-4 overflow-x-auto scrollbar-hide border border-white/5">
+            <div className="flex bg-slate-800/50 p-1.5 rounded-2xl mb-4 overflow-x-auto scrollbar-hide border border-white/5">
                 {(['qr', 'users', 'shop', 'news', 'admins'] as const).map(t => (
                     <button 
                         key={t}
                         onClick={() => setSubTab(t)}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${subTab === t ? 'bg-gold-500 text-dark-900 shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${subTab === t ? 'bg-yellow-500 text-slate-900 shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         {t === 'qr' ? 'QR Коды' : t === 'users' ? 'Пользователи' : t === 'shop' ? 'Магазин' : t === 'news' ? 'Новости' : 'Админы'}
                     </button>
@@ -717,7 +717,7 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
                 <div className="space-y-6">
                     <Card>
                         <h3 className="font-bold mb-4 flex items-center gap-2">
-                            <FileText size={20} className="text-gold-500"/> Генерация для печати (.docx)
+                            <FileText size={20} className="text-yellow-500"/> Генерация для печати (.docx)
                         </h3>
                         
                         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -765,20 +765,20 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
             {subTab === 'users' && (
                 <div className="space-y-3">
                     {users.map(u => (
-                        <div key={u.id} className="bg-dark-800 p-4 rounded-xl flex justify-between items-center border border-white/5">
+                        <div key={u.id} className="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-white/5">
                             <div>
                                 <div className="font-bold flex items-center gap-2">
                                     {u.name}
-                                    {u.role === 'admin' && <span className="text-[10px] bg-gold-500/20 text-gold-500 px-1 rounded font-bold uppercase tracking-wider">ADMIN</span>}
+                                    {u.role === 'admin' && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-1 rounded font-bold uppercase tracking-wider">ADMIN</span>}
                                 </div>
                                 <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                                     ID: <span className="font-mono">{u.id}</span>
                                 </div>
-                                <div className="text-sm mt-1">Баланс: <span className="text-gold-400 font-bold">{u.balance}</span></div>
+                                <div className="text-sm mt-1">Баланс: <span className="text-yellow-400 font-bold">{u.balance}</span></div>
                             </div>
                             <button 
                                 onClick={() => handleAddBalance(u.id)}
-                                className="bg-dark-700 p-3 rounded-xl text-gold-400 hover:bg-gold-500 hover:text-dark-900 transition-colors"
+                                className="bg-slate-700 p-3 rounded-xl text-yellow-400 hover:bg-yellow-500 hover:text-slate-900 transition-colors"
                             >
                                 <PlusCircle size={20} />
                             </button>
@@ -803,11 +803,11 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
                     </Card>
                     <div className="space-y-2">
                         {products.map(p => (
-                             <div key={p.id} className="bg-dark-800 p-3 rounded-2xl flex gap-4 items-center border border-white/5">
-                                <img src={p.image} className="w-16 h-16 rounded-xl object-cover bg-dark-700" alt="" />
+                             <div key={p.id} className="bg-slate-800 p-3 rounded-2xl flex gap-4 items-center border border-white/5">
+                                <img src={p.image} className="w-16 h-16 rounded-xl object-cover bg-slate-700" alt="" />
                                 <div className="flex-1">
                                     <div className="font-bold text-sm">{p.name}</div>
-                                    <div className="text-xs text-gold-400 font-bold mt-1 bg-gold-500/10 w-fit px-2 py-0.5 rounded">{p.price} cubes</div>
+                                    <div className="text-xs text-yellow-400 font-bold mt-1 bg-yellow-500/10 w-fit px-2 py-0.5 rounded">{p.price} cubes</div>
                                 </div>
                                 <button onClick={() => handleDeleteProduct(p.id)} className="text-red-500 p-3 hover:bg-red-500/10 rounded-xl transition-colors"><Trash2 size={18}/></button>
                              </div>
@@ -835,12 +835,12 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
                     <div className="space-y-2">
                          <h4 className="font-bold text-xs uppercase text-gray-500 tracking-wider mb-2">Текущие администраторы</h4>
                          {users.filter(u => u.role === 'admin').map(u => (
-                             <div key={u.id} className="bg-dark-800 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                             <div key={u.id} className="bg-slate-800 p-4 rounded-xl flex items-center justify-between border border-white/5">
                                  <div>
                                     <div className="font-bold">{u.name}</div>
                                     <div className="text-xs text-gray-500 font-mono">{u.id}</div>
                                  </div>
-                                 <span className="text-[10px] bg-gold-500 text-black font-bold px-2 py-1 rounded">ADMIN</span>
+                                 <span className="text-[10px] bg-yellow-500 text-black font-bold px-2 py-1 rounded">ADMIN</span>
                              </div>
                          ))}
                     </div>
@@ -852,17 +852,17 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
                     <Card>
                         <h3 className="font-bold mb-4">Опубликовать новость</h3>
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2 bg-dark-900 rounded-xl px-4 border border-dark-600 focus-within:border-gold-500 transition-colors">
+                            <div className="flex items-center gap-2 bg-slate-900 rounded-xl px-4 border border-slate-600 focus-within:border-yellow-500 transition-colors">
                                 <Type size={16} className="text-gray-500"/>
                                 <input type="text" placeholder="Заголовок" className="w-full bg-transparent py-4 outline-none" value={newsTitle} onChange={e => setNewsTitle(e.target.value)} />
                             </div>
-                            <div className="flex items-center gap-2 bg-dark-900 rounded-xl px-4 border border-dark-600 focus-within:border-gold-500 transition-colors">
+                            <div className="flex items-center gap-2 bg-slate-900 rounded-xl px-4 border border-slate-600 focus-within:border-yellow-500 transition-colors">
                                 <ImageIcon size={16} className="text-gray-500"/>
                                 <input type="text" placeholder="URL Картинки (необязательно)" className="w-full bg-transparent py-4 outline-none" value={newsImage} onChange={e => setNewsImage(e.target.value)} />
                             </div>
                              <textarea 
                                 placeholder="Текст новости..." 
-                                className="w-full bg-dark-900 rounded-xl p-4 border border-dark-600 outline-none min-h-[120px] focus:border-gold-500 transition-colors"
+                                className="w-full bg-slate-900 rounded-xl p-4 border border-slate-600 outline-none min-h-[120px] focus:border-yellow-500 transition-colors"
                                 value={newsContent}
                                 onChange={e => setNewsContent(e.target.value)}
                              />
@@ -909,14 +909,14 @@ export default function App() {
   }, []);
 
   if (!user) return (
-      <div className="flex flex-col items-center justify-center h-screen bg-dark-900 text-gold-500 gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-yellow-500 gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
           <div className="font-bold tracking-widest text-sm animate-pulse">LOADING...</div>
       </div>
   );
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white font-sans selection:bg-gold-500 selection:text-black overflow-hidden relative">
+    <div className="min-h-screen bg-slate-900 text-white font-sans selection:bg-yellow-500 selection:text-black overflow-hidden relative">
       <style>{`
         .input-std {
             width: 100%;

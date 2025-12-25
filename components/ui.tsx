@@ -16,7 +16,7 @@ export const TabBar = ({ activeTab, onTabChange, isAdmin }: { activeTab: string,
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-dark-900/80 backdrop-blur-xl border-t border-white/5 pb-safe pt-2 px-4 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 pb-safe pt-2 px-4 z-50">
       <div className="flex justify-around items-end pb-4">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -29,8 +29,8 @@ export const TabBar = ({ activeTab, onTabChange, isAdmin }: { activeTab: string,
                 onClick={() => onTabChange(tab.id)}
                 className="relative -top-6 group"
               >
-                <div className="absolute inset-0 bg-gold-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
-                <div className="relative bg-gradient-to-br from-gold-400 to-gold-600 text-dark-900 p-4 rounded-full shadow-xl shadow-gold-500/20 transform transition-transform active:scale-95 border-4 border-dark-900">
+                <div className="absolute inset-0 bg-yellow-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="relative bg-gradient-to-br from-yellow-400 to-yellow-600 text-slate-900 p-4 rounded-full shadow-xl shadow-yellow-500/20 transform transition-transform active:scale-95 border-4 border-slate-900">
                   <Icon size={28} strokeWidth={2.5} />
                 </div>
               </button>
@@ -51,13 +51,13 @@ export const TabBar = ({ activeTab, onTabChange, isAdmin }: { activeTab: string,
               >
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               </motion.div>
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-gold-400' : 'text-slate-400'}`}>
+              <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-yellow-400' : 'text-slate-400'}`}>
                 {tab.label}
               </span>
               {isActive && (
                 <motion.div 
                   layoutId="tab-indicator"
-                  className="absolute -top-2 w-1 h-1 bg-gold-500 rounded-full shadow-[0_0_8px_#EAB308]"
+                  className="absolute -top-2 w-1 h-1 bg-yellow-500 rounded-full shadow-[0_0_8px_#EAB308]"
                 />
               )}
             </button>
@@ -72,7 +72,7 @@ export const TabBar = ({ activeTab, onTabChange, isAdmin }: { activeTab: string,
 
 export const Cube = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <motion.div 
-    className={`inline-block text-gold-400 ${className}`}
+    className={`inline-block text-yellow-400 ${className}`}
     animate={{ 
       rotate: [0, 5, -5, 0],
       y: [0, -2, 0]
@@ -90,8 +90,8 @@ export const Cube = ({ size = 20, className = "" }: { size?: number, className?:
 export const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false }: any) => {
   const baseStyle = "w-full py-3.5 rounded-2xl font-bold text-sm tracking-wide transition-all relative overflow-hidden flex items-center justify-center gap-2";
   const variants = {
-    primary: "bg-gradient-to-r from-gold-400 to-gold-500 text-dark-900 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_-5px_rgba(234,179,8,0.4)]",
-    secondary: "bg-dark-800 text-white hover:bg-dark-700 border border-white/10",
+    primary: "bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_-5px_rgba(234,179,8,0.4)]",
+    secondary: "bg-slate-800 text-white hover:bg-slate-700 border border-white/10",
     danger: "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20"
   };
 
@@ -108,7 +108,7 @@ export const Button = ({ children, onClick, variant = 'primary', className = '',
 };
 
 export const Card = ({ children, className = '', noPadding = false }: any) => (
-  <div className={`bg-dark-800/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl ${noPadding ? '' : 'p-5'} ${className}`}>
+  <div className={`bg-slate-800/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl ${noPadding ? '' : 'p-5'} ${className}`}>
     {children}
   </div>
 );
@@ -130,7 +130,7 @@ export const TiltCard = ({ children, className = "", onClick }: any) => {
             onClick={onClick}
             className={`transform-3d ${className}`}
         >
-            <Card className="h-full bg-dark-800 border-white/5 hover:border-gold-500/30 transition-colors duration-300">
+            <Card className="h-full bg-slate-800 border-white/5 hover:border-yellow-500/30 transition-colors duration-300">
                 {children}
             </Card>
         </motion.div>
@@ -145,7 +145,7 @@ export const Particles = () => {
             {[...Array(15)].map((_, i) => (
                 <motion.div
                     key={i}
-                    className="absolute bg-gold-500/10 rounded-full blur-sm"
+                    className="absolute bg-yellow-500/10 rounded-full blur-sm"
                     initial={{
                         x: Math.random() * window.innerWidth,
                         y: Math.random() * window.innerHeight,
@@ -229,7 +229,7 @@ export const Modal = ({ isOpen, onClose, children, title }: any) => {
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="relative bg-dark-900 border border-white/10 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
+                className="relative bg-slate-900 border border-white/10 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
             >
                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
                     <h3 className="font-bold text-lg">{title}</h3>
