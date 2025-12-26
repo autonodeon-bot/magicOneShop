@@ -571,6 +571,14 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
             for (let i = 0; i < codes.length; i++) {
                 const qrData = codes[i];
                 const dataUrl = await QRCode.toDataURL(qrData.code, { margin: 1, width: 300 });
+
+                // FIX: Docx needs raw binary data (Uint8Array), not a base64 string
+                const base64Data = dataUrl.split(',')[1];
+                const binaryString = window.atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let j = 0; j < binaryString.length; j++) {
+                    bytes[j] = binaryString.charCodeAt(j);
+                }
                 
                 const cell = new TableCell({
                     children: [
@@ -578,7 +586,7 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
                             alignment: AlignmentType.CENTER,
                             children: [
                                 new ImageRun({
-                                    data: dataUrl,
+                                    data: bytes, // Using Uint8Array instead of string
                                     transformation: {
                                         width: qrSize,
                                         height: qrSize,
@@ -633,9 +641,9 @@ const AdminPage = ({ showToast }: { showToast: (m: string, t: 'success'|'error')
             FileSaver.saveAs(blob, `QR_Codes_${qrCount}_x_${qrValue}_cubes.docx`);
             
             showToast(`Сгенерировано ${qrCount} кодов!`, "success");
-        } catch (error) {
-            console.error(error);
-            showToast("Ошибка генерации", "error");
+        } catch (error: any) {
+            console.error("GENERATE ERROR", error);
+            showToast("Ошибка: " + error.message, "error");
         } finally {
             setIsGenerating(false);
         }
