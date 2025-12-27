@@ -404,18 +404,47 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
     const [loading, setLoading] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
     const [cameraActive, setCameraActive] = useState(false);
+
+    // Функция для остановки камеры
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setCameraActive(false);
+    };
+
+    // Остановка при размонтировании
+    useEffect(() => {
+        return () => stopCamera();
+    }, []);
+
+    // Привязка потока к видео, когда элемент появится
+    useEffect(() => {
+        if (cameraActive && streamRef.current && videoRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+            videoRef.current.play().catch(e => console.error("Auto-play error", e));
+        }
+    }, [cameraActive]);
 
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                setCameraActive(true);
-            }
+            // Запрашиваем доступ
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+            streamRef.current = stream;
+            // Активируем рендер видео-элемента
+            setCameraActive(true);
         } catch (e) {
-            console.error("Camera error", e);
-            showToast("Не удалось запустить камеру", "error");
+            console.error("Camera access error", e);
+            showToast("Нет доступа к камере. Проверьте разрешения.", "error");
         }
     };
 
@@ -441,13 +470,19 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
             {showConfetti && <Confetti />}
             <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-900">
                 {cameraActive ? (
-                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-80" />
+                    <video 
+                        ref={videoRef} 
+                        autoPlay 
+                        playsInline 
+                        muted 
+                        className="w-full h-full object-cover opacity-90" 
+                    />
                 ) : (
                     <div className="text-center p-6 relative z-10">
                         <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
                             <QrCode size={40} className="text-yellow-500" />
                         </div>
-                        <p className="text-gray-400 mb-6 font-medium">Наведите камеру на QR код игрушки</p>
+                        <p className="text-gray-400 mb-6 font-medium">Нажмите для сканирования QR кода</p>
                         <Button onClick={startCamera} variant="secondary" className="w-auto px-8">Включить камеру</Button>
                     </div>
                 )}
@@ -469,6 +504,14 @@ const ScannerPage = ({ refreshUser, showToast }: { refreshUser: () => void, show
                         />
                     </div>
                 </div>
+                {cameraActive && (
+                    <button 
+                        onClick={stopCamera} 
+                        className="absolute top-6 right-6 bg-slate-900/50 backdrop-blur-md p-3 rounded-full text-white/70 hover:text-white"
+                    >
+                        <Settings size={20} className="rotate-45" /> {/* Close-like icon placeholder */}
+                    </button>
+                )}
             </div>
 
             <div className="bg-slate-900 p-6 rounded-t-3xl -mt-6 relative z-10 border-t border-white/10 shadow-2xl">
